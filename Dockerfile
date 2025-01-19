@@ -1,3 +1,4 @@
+
 FROM node:lts-buster
 
 RUN apt-get update && \
@@ -9,8 +10,8 @@ RUN apt-get update && \
   npm i pm2 -g && \
   rm -rf /var/lib/apt/lists/*
   
-RUN git clone https://github.com/mrhannstz/FELIX-MD.git /root/felix_BOt
-WORKDIR /root/felix_Bot/
+RUN git clone https://github.com/Mrhanstz/FELIX-MD /root/alpha_Bot
+WORKDIR /root/alpha_Bot/
 
 
 COPY package.json .
@@ -21,4 +22,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["node", "index.js" , "felix"]
+CMD ["npm", "run" , "felix"]
