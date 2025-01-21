@@ -194,7 +194,7 @@ hans({
   }
 });
 hans({
-  'nomCom': "code",
+  'nomCom': "code1",
   'aliases': ["session", "pair", "paircode", "qrcode"],
   'reaction': '🚀',
   'categorie': 'system'
@@ -203,15 +203,15 @@ hans({
 
   try {
     if (!arg || arg.length === 0) {
-      return repondre("Example Usage: .code 2541111xxxxx.");
+      return repondre("Example Usage: .code 2551111xxxxx.");
     }
 
     // Notify user that pairing is in progress
-    await repondre("*Wait FELIX Md is getting your pair code 💧✅...*");
+    await repondre("*Wait Hans Tz is getting your pair code 💧✅...*");
 
     // Prepare the API request
     const encodedNumber = encodeURIComponent(arg.join(" "));
-    const apiUrl = `https://hans-sessions-pi5z.onrender.com/code?number=${encodedNumber}`;
+    const apiUrl = `https://hans-xmd-session-pair.onrender.com/code?number=${encodedNumber}`;
 
     // Fetch the pairing code from the API
     const response = await axios.get(apiUrl);
