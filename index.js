@@ -460,55 +460,52 @@ zk.ev.on("messages.upsert", async m => {
   }
 });
 
-// Free Chatbot API URL
-const CHATBOT_API_URL = 'https://mannoffc-x.hf.space/ai/chat';
+// Wit.ai free public demo API endpoint
+const WIT_API_URL = "https://api.wit.ai/message?v=20230122&q=";
 
-// Function to fetch a chatbot reply from the Free API
+// Function to get a chatbot reply
 const getChatbotReply = async (messageText) => {
   try {
-    // Make a POST request to the API
-    const response = await axios.post(CHATBOT_API_URL, {
-      message: messageText, // Send the user's message
+    // Make a GET request to Wit.ai demo API with the user's message
+    const response = await axios.get(`${WIT_API_URL}${encodeURIComponent(messageText)}`, {
+      headers: {
+        Authorization: `Bearer DEMO_TOKEN`, // Demo token provided by Wit.ai
+      },
     });
 
-    // Extract and return the chatbot's reply
-    return response.data.reply || "Sorry, I couldn't process your message.";
+    // Extract and return the chatbot's response
+    const reply = response.data.text || "I'm not sure how to respond to that.";
+    return reply;
   } catch (error) {
     console.error('Error fetching reply from Chatbot API:', error.message);
     return 'Sorry, the chatbot service is currently unavailable.';
   }
 };
 
-// Listen for incoming messages when CHAT_BOT is enabled
+// Example integration into a chatbot flow
 if (conf.CHAT_BOT === 'yes') {
   console.log('CHAT_BOT is enabled. Listening for messages...');
   
   zk.ev.on('messages.upsert', async (event) => {
     try {
       const { messages } = event;
-      
-      // Iterate over incoming messages
       for (const message of messages) {
-        if (!message.key || !message.key.remoteJid || message.key.fromMe) {
-          continue; // Skip if there's no remoteJid or the message is sent by the bot itself
-        }
+        if (!message.key || !message.key.remoteJid || message.key.fromMe) continue;
 
         const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
 
         if (messageText) {
           try {
-            // Fetch the reply from the chatbot API
             const replyMessage = await getChatbotReply(messageText);
 
             if (replyMessage) {
-              // Send the reply with the quoted message
               await zk.sendMessage(message.key.remoteJid, {
-                text: replyMessage, // The chatbot's reply
-                quoted: message,    // Quote the original message
+                text: replyMessage,
+                quoted: message, // Reply to the original message
               });
-              console.log(`Quoted reply sent: ${replyMessage}`);
+              console.log(`Reply sent: ${replyMessage}`);
             } else {
-              console.log('No reply from the chatbot. Skipping message.');
+              console.log('No reply generated for the input.');
             }
           } catch (error) {
             console.error(`Error processing message: ${error.message}`);
