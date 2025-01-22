@@ -17,6 +17,9 @@ WORKDIR /root/alpha_Bot/
 COPY package.json .
 RUN npm install pm2 -g
 RUN npm install --legacy-peer-deps
+node chatbot.js
+npm install axios
+
 
 COPY . .
 
