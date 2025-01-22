@@ -461,7 +461,7 @@ zk.ev.on("messages.upsert", async m => {
 });
 
 // Free Chatbot API URL
-const CHATBOT_API_URL = 'https://dummyjson.com/chatbot';
+const CHATBOT_API_URL = 'https://mannoffc-x.hf.space/ai/chat';
 
 // Function to fetch a chatbot reply from the Free API
 const getChatbotReply = async (messageText) => {
