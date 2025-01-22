@@ -459,37 +459,30 @@ zk.ev.on("messages.upsert", async m => {
     }
   }
 });
-
-// Chatbot API Configuration
-const CHATBOT_API_URL =
-  "https://chatgpt-simple-api-cheapest2.p.rapidapi.com/completion";
-const RAPIDAPI_KEY = "7cff3496f0msh011c709965a4412p14ca32jsnfbf008d42f41"; // Replace this if necessary
+// Hugging Face API URL for a conversational model (no API key required)
+const HF_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill";
 
 // Function to fetch a chatbot reply
 const getChatbotReply = async (messageText) => {
   try {
-    const response = await axios.get(
-      `${CHATBOT_API_URL}?apiKey=%2Fcompletion%3FapiKey%3DYOUR_API_KEY`,
-      {
-        headers: {
-          "x-rapidapi-host": "chatgpt-simple-api-cheapest2.p.rapidapi.com",
-          "x-rapidapi-key": RAPIDAPI_KEY,
-        },
-        params: {
-          prompt: messageText, // The message from the user
-        },
-      }
+    const response = await axios.post(
+      HF_API_URL,
+      { inputs: messageText },
+      { headers: { "Content-Type": "application/json" } }
     );
 
-    // Extract and return the chatbot's reply
-    return response.data.response || "I'm not sure how to respond to that.";
+    if (response.data && response.data.generated_text) {
+      return response.data.generated_text;
+    } else {
+      return "Sorry, I didn't understand that. Can you try rephrasing?";
+    }
   } catch (error) {
-    console.error("Error fetching reply from Chatbot API:", error.message);
+    console.error("Error fetching reply from Hugging Face API:", error.message);
     return "Sorry, the chatbot service is currently unavailable.";
   }
 };
 
-// Listen for incoming messages
+// Listen for incoming messages (example with `zk` framework)
 if (conf.CHAT_BOT === "yes") {
   console.log("CHAT_BOT is enabled. Listening for messages...");
 
