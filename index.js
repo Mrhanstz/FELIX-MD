@@ -57,7 +57,6 @@ const pino = require("pino");
 const boom_1 = require("@hapi/boom");
 const conf = require("./set");
 const axios = require('axios');
-const fs = require('fs');
 let fs = require("fs-extra");
 let path = require("path");
 const FileType = require('file-type');
