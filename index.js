@@ -491,6 +491,22 @@ const getReplyMessage = (messageText, replyMessages) => {
   return null; // Return null if no match is found
 };
 
+// Function to send quoted replies with the "quoted: ms" format
+const sendQuotedReply = async (message, reply) => {
+  try {
+    const quotedMessage = {
+      text: `quoted: ms ${reply}`,
+      quotedMessage: message, // This wraps the original message
+    };
+
+    // Send the quoted message (assuming 'zk.sendMessage' sends the message)
+    await zk.sendMessage(message.key.remoteJid, quotedMessage);
+    console.log(`Quoted reply sent: quoted: ms ${reply}`);
+  } catch (error) {
+    console.error(`Error sending quoted reply: ${error.message}`);
+  }
+};
+
 // Listen for incoming messages when CHAT_BOT is enabled
 if (conf.CHAT_BOT === 'yes') {
   console.log('CHAT_BOT is enabled. Listening for messages...');
@@ -498,7 +514,7 @@ if (conf.CHAT_BOT === 'yes') {
   zk.ev.on('messages.upsert', async (event) => {
     try {
       const { messages } = event;
-      
+
       // Load the replies from the JSON file
       const replyMessages = loadReplyMessages();
 
@@ -509,7 +525,14 @@ if (conf.CHAT_BOT === 'yes') {
         }
 
         const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
-        const replyMessage = getReplyMessage(messageText, replyMessages);
+        let replyMessage = '';
+
+        // Detect hidden words in the message and prepare responses
+        if (messageText.toLowerCase().includes('help')) {
+          replyMessage = "I'm here to assist you! 🤖";
+        } else if (messageText.toLowerCase().includes('weather')) {
+          replyMessage = "The weather is great today! 🌞";
+        }
 
         // Ensure we don't send replies too frequently
         const currentTime = Date.now();
@@ -519,18 +542,11 @@ if (conf.CHAT_BOT === 'yes') {
         }
 
         if (replyMessage) {
-          try {
-            // Send the corresponding text reply
-            await zk.sendMessage(message.key.remoteJid, {
-              text: replyMessage
-            });
-            console.log(`Text reply sent: ${replyMessage}`);
+          // Send the quoted response
+          await sendQuotedReply(message, replyMessage);
 
-            // Update the last reply time
-            lastReplyTime = currentTime;
-          } catch (error) {
-            console.error(`Error sending text reply: ${error.message}`);
-          }
+          // Update the last reply time
+          lastReplyTime = currentTime;
         } else {
           console.log('No matching keyword detected. Skipping message.');
         }
@@ -539,10 +555,11 @@ if (conf.CHAT_BOT === 'yes') {
         await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     } catch (error) {
-      console.error('Error in message processing:', error.message);
+      console.error('Error processing messages:', error.message);
     }
   });
 }
+
 // AUTO_REACT: React to messages with random emoji if enabled.
 if (conf.AUTO_REACT === "yes") {
   zk.ev.on("messages.upsert", async m => {
