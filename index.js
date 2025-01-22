@@ -460,15 +460,26 @@ zk.ev.on("messages.upsert", async m => {
   }
 });
 
-// Public multilingual chatbot API (Example endpoint)
-const CHATBOT_API_URL = "https://api.monkedev.com/fun/chat";
+// Chatbot API Configuration
+const CHATBOT_API_URL =
+  "https://chatgpt-simple-api-cheapest2.p.rapidapi.com/completion";
+const RAPIDAPI_KEY = "7cff3496f0msh011c709965a4412p14ca32jsnfbf008d42f41"; // Replace this if necessary
 
+// Function to fetch a chatbot reply
 const getChatbotReply = async (messageText) => {
   try {
-    // Make a GET request to the chatbot API
-    const response = await axios.get(CHATBOT_API_URL, {
-      params: { msg: messageText }, // User message as query parameter
-    });
+    const response = await axios.get(
+      `${CHATBOT_API_URL}?apiKey=%2Fcompletion%3FapiKey%3DYOUR_API_KEY`,
+      {
+        headers: {
+          "x-rapidapi-host": "chatgpt-simple-api-cheapest2.p.rapidapi.com",
+          "x-rapidapi-key": RAPIDAPI_KEY,
+        },
+        params: {
+          prompt: messageText, // The message from the user
+        },
+      }
+    );
 
     // Extract and return the chatbot's reply
     return response.data.response || "I'm not sure how to respond to that.";
@@ -479,7 +490,7 @@ const getChatbotReply = async (messageText) => {
 };
 
 // Listen for incoming messages
-if (conf.CHAT_BOT === 'yes') {
+if (conf.CHAT_BOT === "yes") {
   console.log("CHAT_BOT is enabled. Listening for messages...");
 
   zk.ev.on("messages.upsert", async (event) => {
@@ -516,6 +527,7 @@ if (conf.CHAT_BOT === 'yes') {
     }
   });
 }
+
 
 // AUTO_REACT: React to messages with random emoji if enabled.
 if (conf.AUTO_REACT === "yes") {
