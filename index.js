@@ -459,67 +459,39 @@ zk.ev.on("messages.upsert", async m => {
     }
   }
 });
-// Hugging Face API URL for a conversational model (no API key required)
-const HF_API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill";
 
-// Function to fetch a chatbot reply
-const getChatbotReply = async (messageText) => {
-  try {
-    const response = await axios.post(
-      HF_API_URL,
-      { inputs: messageText },
-      { headers: { "Content-Type": "application/json" } }
-    );
+const { startChatbot } = require('./chatbot');
 
-    if (response.data && response.data.generated_text) {
-      return response.data.generated_text;
-    } else {
-      return "Sorry, I didn't understand that. Can you try rephrasing?";
-    }
-  } catch (error) {
-    console.error("Error fetching reply from Hugging Face API:", error.message);
-    return "Sorry, the chatbot service is currently unavailable.";
-  }
+// Example configuration object
+const conf = {
+  CHAT_BOT: "yes", // Enable chatbot
 };
 
-// Listen for incoming messages (example with `zk` framework)
-if (conf.CHAT_BOT === "yes") {
-  console.log("CHAT_BOT is enabled. Listening for messages...");
+// Example bot framework (`zk` as a placeholder)
+const zk = {
+  ev: {
+    on: (event, callback) => {
+      console.log(`Listening for ${event} events...`);
+      // Simulate an event (replace with actual bot implementation)
+      setTimeout(() => {
+        callback({
+          messages: [
+            {
+              key: { remoteJid: "1234@s.whatsapp.net", fromMe: false },
+              message: { conversation: "Hello, bot!" },
+            },
+          ],
+        });
+      }, 1000);
+    },
+  },
+  sendMessage: async (jid, message) => {
+    console.log(`Sending message to ${jid}:`, message.text);
+  },
+};
 
-  zk.ev.on("messages.upsert", async (event) => {
-    try {
-      const { messages } = event;
-
-      for (const message of messages) {
-        if (!message.key || !message.key.remoteJid || message.key.fromMe) continue;
-
-        const messageText =
-          message.message?.conversation || message.message?.extendedTextMessage?.text || "";
-
-        if (messageText) {
-          try {
-            const replyMessage = await getChatbotReply(messageText);
-
-            if (replyMessage) {
-              // Send the reply with the quoted original message
-              await zk.sendMessage(message.key.remoteJid, {
-                text: replyMessage,
-                quoted: message, // Quote the original message
-              });
-              console.log(`Reply sent: ${replyMessage}`);
-            } else {
-              console.log("No reply generated for the input.");
-            }
-          } catch (error) {
-            console.error(`Error processing message: ${error.message}`);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error in message processing:", error.message);
-    }
-  });
-}
+// Start the chatbot
+startChatbot(zk, conf);
 
 
 // AUTO_REACT: React to messages with random emoji if enabled.
