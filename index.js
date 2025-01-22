@@ -460,52 +460,51 @@ zk.ev.on("messages.upsert", async m => {
   }
 });
 
-// Wit.ai free public demo API endpoint
-const WIT_API_URL = "https://api.wit.ai/message?v=20230122&q=";
+// Public multilingual chatbot API (Example endpoint)
+const CHATBOT_API_URL = "https://api.monkedev.com/fun/chat";
 
-// Function to get a chatbot reply
 const getChatbotReply = async (messageText) => {
   try {
-    // Make a GET request to Wit.ai demo API with the user's message
-    const response = await axios.get(`${WIT_API_URL}${encodeURIComponent(messageText)}`, {
-      headers: {
-        Authorization: `Bearer DEMO_TOKEN`, // Demo token provided by Wit.ai
-      },
+    // Make a GET request to the chatbot API
+    const response = await axios.get(CHATBOT_API_URL, {
+      params: { msg: messageText }, // User message as query parameter
     });
 
-    // Extract and return the chatbot's response
-    const reply = response.data.text || "I'm not sure how to respond to that.";
-    return reply;
+    // Extract and return the chatbot's reply
+    return response.data.response || "I'm not sure how to respond to that.";
   } catch (error) {
-    console.error('Error fetching reply from Chatbot API:', error.message);
-    return 'Sorry, the chatbot service is currently unavailable.';
+    console.error("Error fetching reply from Chatbot API:", error.message);
+    return "Sorry, the chatbot service is currently unavailable.";
   }
 };
 
-// Example integration into a chatbot flow
+// Listen for incoming messages
 if (conf.CHAT_BOT === 'yes') {
-  console.log('CHAT_BOT is enabled. Listening for messages...');
-  
-  zk.ev.on('messages.upsert', async (event) => {
+  console.log("CHAT_BOT is enabled. Listening for messages...");
+
+  zk.ev.on("messages.upsert", async (event) => {
     try {
       const { messages } = event;
+
       for (const message of messages) {
         if (!message.key || !message.key.remoteJid || message.key.fromMe) continue;
 
-        const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+        const messageText =
+          message.message?.conversation || message.message?.extendedTextMessage?.text || "";
 
         if (messageText) {
           try {
             const replyMessage = await getChatbotReply(messageText);
 
             if (replyMessage) {
+              // Send the reply with the quoted original message
               await zk.sendMessage(message.key.remoteJid, {
                 text: replyMessage,
-                quoted: message, // Reply to the original message
+                quoted: message, // Quote the original message
               });
               console.log(`Reply sent: ${replyMessage}`);
             } else {
-              console.log('No reply generated for the input.');
+              console.log("No reply generated for the input.");
             }
           } catch (error) {
             console.error(`Error processing message: ${error.message}`);
@@ -513,7 +512,7 @@ if (conf.CHAT_BOT === 'yes') {
         }
       }
     } catch (error) {
-      console.error('Error in message processing:', error.message);
+      console.error("Error in message processing:", error.message);
     }
   });
 }
