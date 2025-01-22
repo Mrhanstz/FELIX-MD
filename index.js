@@ -459,35 +459,86 @@ zk.ev.on("messages.upsert", async m => {
     }
   }
 });
-
-const { startChatbot } = require('./chatbot');
-
-// Example configuration object
-const conf = {
-  CHAT_BOT: "yes", // Enable chatbot
-};
-
-// Example bot framework (`zk` as a placeholder)
 const zk = {
   ev: {
     on: (event, callback) => {
+      // Simulate incoming messages (for demonstration purposes)
       console.log(`Listening for ${event} events...`);
-      // Simulate an event (replace with actual bot implementation)
       setTimeout(() => {
         callback({
           messages: [
-            {
-              key: { remoteJid: "1234@s.whatsapp.net", fromMe: false },
-              message: { conversation: "Hello, bot!" },
-            },
-          ],
+            { key: { remoteJid: "1234@s.whatsapp.net", fromMe: true }, message: { conversation: "What's your name?" } },
+            { key: { remoteJid: "1234@s.whatsapp.net", fromMe: true }, message: { conversation: "Can you tell me a joke?" } },
+            { key: { remoteJid: "1234@s.whatsapp.net", fromMe: true }, message: { conversation: "How are you today?" } }
+          ]
         });
-      }, 1000);
-    },
+      }, 1000); // Simulate incoming messages
+    }
   },
   sendMessage: async (jid, message) => {
-    console.log(`Sending message to ${jid}:`, message.text);
-  },
+    console.log(`Sending message to ${jid}:`);
+    console.log(message.text);
+  }
+};
+
+const conf = {
+  CHAT_BOT: "yes",
+};
+
+// Hugging Face API endpoint for chat
+const HF_API_URL = "https://api-inference.huggingface.co/models/gpt2";
+
+// Function to get chatbot response from Hugging Face's API
+const getChatbotReply = async (messageText) => {
+  try {
+    const response = await axios.post(
+      HF_API_URL,
+      { inputs: messageText },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    if (response.data && response.data[0]?.generated_text) {
+      return response.data[0].generated_text;
+    } else {
+      return "Sorry, I didn't understand that. Can you try again?";
+    }
+  } catch (error) {
+    console.error("Error fetching reply from Hugging Face API:", error.message);
+    return "Sorry, the chatbot service is currently unavailable.";
+  }
+};
+
+// Function to start chatbot and process incoming messages
+const startChatbot = (zk, conf) => {
+  if (conf.CHAT_BOT === "yes") {
+    console.log("CHAT_BOT is enabled. Listening for messages...");
+
+    zk.ev.on("messages.upsert", async (event) => {
+      try {
+        const { messages } = event;
+
+        for (const message of messages) {
+          if (!message.key || !message.key.remoteJid || message.key.fromMe) continue;
+
+          const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || "";
+
+          if (messageText) {
+            const replyMessage = await getChatbotReply(messageText);
+
+            if (replyMessage) {
+              await zk.sendMessage(message.key.remoteJid, {
+                text: replyMessage,
+                quoted: message, // Quote the original message
+              });
+              console.log(`Reply sent: ${replyMessage}`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error in message processing:", error.message);
+      }
+    });
+  }
 };
 
 // Start the chatbot
