@@ -459,63 +459,88 @@ zk.ev.on("messages.upsert", async m => {
     }
   }
 });
-const API_URL = "https://apis.ibrahimadams.us.kg/api/ai/gpt4";
-const API_KEY = "ibraah-help"; // Replace with your actual API key if needed
-
-// Function to fetch a chatbot reply
-const getChatbotReply = async (messageText) => {
+// Load the reply messages from the JSON file
+const loadReplyMessages = () => {
   try {
-    const response = await axios.get(API_URL, {
-      params: { apikey: API_KEY, q: messageText },
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (response.data && response.data.reply) {
-      return response.data.reply; // Assuming the response contains a "reply" field
-    } else {
-      return "Sorry, I didn't understand that. Can you try rephrasing?";
-    }
+    const filePath = path.join(__dirname, 'database', 'chatbot.json');
+    const data = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(data);
   } catch (error) {
-    console.error("Error fetching reply from API:", error.message);
-    return "Sorry, the chatbot service is currently unavailable.";
+    console.error('Error loading chatbot responses:', error.message);
+    return {}; // Return an empty object if there is an error
   }
 };
 
-// Listen for incoming messages (example with `zk` framework)
-if (conf.CHAT_BOT === "yes") {
-  console.log("CHAT_BOT is enabled. Listening for messages...");
+// Track the time of the last response to enforce rate-limiting
+let lastReplyTime = 0;
 
-  zk.ev.on("messages.upsert", async (event) => {
+// Define the minimum delay (in milliseconds) between replies (e.g., 5 seconds)
+const MIN_REPLY_DELAY = 5000;
+
+// Function to find a matching text reply based on the message
+const getReplyMessage = (messageText, replyMessages) => {
+  // Convert the message to lowercase and split it into words
+  const words = messageText.toLowerCase().split(/\s+/);
+
+  // Check if any of the words match a keyword in the replyMessages object
+  for (const word of words) {
+    if (replyMessages[word]) {
+      return replyMessages[word]; // Return the matching reply
+    }
+  }
+
+  return null; // Return null if no match is found
+};
+
+// Listen for incoming messages when CHAT_BOT is enabled
+if (conf.CHAT_BOT === 'yes') {
+  console.log('CHAT_BOT is enabled. Listening for messages...');
+  
+  zk.ev.on('messages.upsert', async (event) => {
     try {
       const { messages } = event;
+      
+      // Load the replies from the JSON file
+      const replyMessages = loadReplyMessages();
 
+      // Iterate over incoming messages
       for (const message of messages) {
-        if (!message.key || !message.key.remoteJid || message.key.fromMe) continue;
-
-        const messageText =
-          message.message?.conversation || message.message?.extendedTextMessage?.text || "";
-
-        if (messageText) {
-          try {
-            const replyMessage = await getChatbotReply(messageText);
-
-            if (replyMessage) {
-              // Send the reply with the quoted original message
-              await zk.sendMessage(message.key.remoteJid, {
-                text: replyMessage,
-                quoted: message, // Quote the original message
-              });
-              console.log(`Reply sent: ${replyMessage}`);
-            } else {
-              console.log("No reply generated for the input.");
-            }
-          } catch (error) {
-            console.error(`Error processing message: ${error.message}`);
-          }
+        if (!message.key || !message.key.remoteJid) {
+          continue; // Skip if there's no remoteJid
         }
+
+        const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+        const replyMessage = getReplyMessage(messageText, replyMessages);
+
+        // Ensure we don't send replies too frequently
+        const currentTime = Date.now();
+        if (currentTime - lastReplyTime < MIN_REPLY_DELAY) {
+          console.log('Rate limit applied. Skipping reply.');
+          continue; // Skip this reply if the delay hasn't passed
+        }
+
+        if (replyMessage) {
+          try {
+            // Send the corresponding text reply
+            await zk.sendMessage(message.key.remoteJid, {
+              text: replyMessage
+            });
+            console.log(`Text reply sent: ${replyMessage}`);
+
+            // Update the last reply time
+            lastReplyTime = currentTime;
+          } catch (error) {
+            console.error(`Error sending text reply: ${error.message}`);
+          }
+        } else {
+          console.log('No matching keyword detected. Skipping message.');
+        }
+
+        // Wait for a brief moment before processing the next message (3 seconds delay)
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     } catch (error) {
-      console.error("Error in message processing:", error.message);
+      console.error('Error in message processing:', error.message);
     }
   });
 }
@@ -1392,34 +1417,36 @@ if (conf.ANTILINK === "yes") {
         console.log("Felix Md successfully connected✅");
         await activateCrons();
         if (conf.DP.toLowerCase() === "yes") {
-  await zk.sendMessage(zk.user.id, {
-    image: { url: "https://files.catbox.moe/4bvh1g.jpg" }, // Bot image URL
+  // Send the video with the message and quote the original message
+  const sentMessage = await zk.sendMessage(zk.user.id, {
+    video: { url: "https://files.catbox.moe/nva5tz.mp4" }, // Video URL
     caption: `
-╭━━━━━━━━━━━━━━━
-┃ *『 FELIX-MD 𝐢𝐬 𝐎𝐧𝐥𝐢𝐧𝐞 』*
-╰━━━━━━━━━━━━━━━
+╭━━━━━━━━━━━━━━━━━━━━⊷
+┃    *『 FELIX-MD 𝐢𝐬 𝐎𝐧𝐥𝐢𝐧𝐞 』*
+╰━━━━━━━━━━━━━━━━━━━━⊷
 
  🌟 *Bot Information*
- ━━━━━━━━━━━━━━━
-┃📌┃*Creator*: HANSTZ
-┃🔑┃*Prefix*: [ ${prefixe} ]
-┃💡┃*Mode*: ${md} mode
-┃📝┃*Total Commands*: ${evt.cm.length}
- ━━━━━━━━━━━━━━━
+ ━━━━━━━━━━━━━━━━━━━━
+ 📌 *Creator*: HANSTZ
+ 🔑 *Prefix*: [ ${prefixe} ]
+ 💡 *Mode*: ${md} mode
+ 📝 *Total Commands*: ${evt.cm.length}
 
-╭━━━━━━━━━━━━━━━
-┃🔔 *Thank you for choosing HANS-MD!*
-┃🌐 *Stay updated with the latest information.*
-┃🎭 *Regards, HANSTZ
-╰━━━━━━━━━━━━━━━
+ ━━━━━━━━━━━━━━━━━━━━
+ 🔔 *Thank you for choosing FELIX-MD!*
+ 🌐 *Stay updated with the latest information.*
+ > Regards, HANSTZ
+╰━━━━━━━━━━━━━━━━━━━━⊷
 
-🎶 *Now enjoy you : Hans md song Connected*`
+⭐ *Don't forget to give me Star and fork the repo*`
   });
-  // Send the music file
+
+  // Send the audio reply, quoted the video/image message
   await zk.sendMessage(zk.user.id, {
     audio: { url: "https://github.com/kinghanstz/HANS-DATABASE/raw/38fc2499e3435cf7a2e85a22a9b1afeb492d234e/audios/Matrix-menu.mp3" },
     mimetype: "audio/mp4",
-    ptt: true
+    ptt: true,
+    quoted: sentMessage, // Quote the video/image message sent earlier
   });
 }
 
