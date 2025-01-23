@@ -74,7 +74,7 @@ const {
   atbverifierEtatJid,
   atbrecupererActionJid
 } = require("./bdd/antibot");
-let evt = require(__dirname + "/framework/zokou");
+let evt = require(__dirname + "/hanstz/hans");
 const {
   isUserBanned,
   addUserToBanList,
@@ -94,7 +94,7 @@ const {
 //const //{loadCmd}=require("/hanstz/mesfonctions")
 let {
   reagir
-} = require(__dirname + "/framework/app");
+} = require(__dirname + "/hanstz/app");
 var session = conf.session.replace(/HANS-MD;;;=>/g, "");
 const prefixe = conf.PREFIXE;
 require('dotenv').config({
