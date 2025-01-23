@@ -56,7 +56,6 @@ logger.level = 'silent';
 const pino = require("pino");
 const boom_1 = require("@hapi/boom");
 const conf = require("./set");
-const axios = require('axios');
 let fs = require("fs-extra");
 let path = require("path");
 const FileType = require('file-type');
@@ -180,17 +179,16 @@ setTimeout(() => {
         const callerId = callData[0].from;
         await zk.rejectCall(callId, callerId);
         await zk.sendMessage(callerId, {
-          text: "\n\n`⚠️`\n\n> WARNING: THIS IS HANS-XMD. MY OWNER IS UNAVAILABLE FOR CALLS. PLEASE SEND A TEXT MESSAGE\n\n`🤫`."
+          text: "```📵I AM HANS Md | I REJECT THIS CALL BECAUSE MY OWNER IS BUSY.KINDLY SEND TEXT INSTEAD``` ."
         });
       }
     });
     // Function to format notification message
 function createNotification(deletedMessage) {
   const deletedBy = deletedMessage.key.participant || deletedMessage.key.remoteJid;
-  let notification = `*🎃HANS MD ANTIDELETE🎃*\n\n`;
-  notification +=   `*⌚TIME DELETED :* ${new Date().toLocaleString()}\n`;
-  notification +=   `*🤦🏽‍♂️DELETED BY   :* @${deletedBy.split('@')[0]}\n\n
-                    *👨🏽‍💻POWERED BY HANSTZ*\n\n`;
+  let notification = `*HANS ANTIDELETE*\n\n`;
+  notification += `*Time deleted🥀:* ${new Date().toLocaleString()}\n`;
+  notification += `*Deleted by🌷:* @${deletedBy.split('@')[0]}\n\n*Powered by HANSTZ*\n\n`;
   return notification;
 }
 
@@ -318,7 +316,7 @@ zk.ev.on("messages.upsert", async m => {
       const senderNumber = sender.split('@')[0];
 
       // Update the auto-reply message dynamically
-      auto_reply_message = `Hello @${senderNumber}, A brief departure is on the horizon, but I shall return posthaste. Please bear with me for a fleeting moment, and I’ll rejoin you shortly \n\n*powered by Felix Md*.`;
+      auto_reply_message = `Hello @${senderNumber}, A brief departure is on the horizon, but I shall return posthaste. Please bear with me for a fleeting moment, and I’ll rejoin you shortly \n\n*powered by HANS Md*.`;
 
       // Check if the message exists and is a command to set a new auto-reply message with any prefix
       if (messageText.match(/^[^\w\s]/) && ms.key.fromMe) {
@@ -350,9 +348,9 @@ zk.ev.on("messages.upsert", async m => {
      // Function to format notification message
 function createNotification(deletedMessage) {
   const deletedBy = deletedMessage.key.participant || deletedMessage.key.remoteJid;
-  let notification = `*\n\n`🎃`\n\n> HANS MD ANTIDELETE\n\n`🎃`*\n\n`;
-  notification +=   `*\n\n> TIME DELETED\n\n`⌚`:* ${new Date().toLocaleString()}\n`;
-  notification +=   `*\n\n> DELETED BY\n\n`🤦🏽‍♂️`:* @${deletedBy.split('@')[0]}\n\n> POWERED BY HANSTZ\n\n`;
+  let notification = `*HANS ANTIDELETE*\n\n`;
+  notification += `*Time deleted🥀:* ${new Date().toLocaleString()}\n`;
+  notification += `*Deleted by🌷:* @${deletedBy.split('@')[0]}\n\n*Powered by HANSTZ*\n\n`;
   return notification;
 }
 
@@ -459,6 +457,7 @@ zk.ev.on("messages.upsert", async m => {
     }
   }
 });
+
 // Load the reply messages from the JSON file
 const loadReplyMessages = () => {
   try {
@@ -544,7 +543,6 @@ if (conf.CHAT_BOT === 'yes') {
     }
   });
 }
-
 // AUTO_REACT: React to messages with random emoji if enabled.
 if (conf.AUTO_REACT === "yes") {
   zk.ev.on("messages.upsert", async m => {
@@ -690,10 +688,10 @@ if (conf.AUTO_LIKE_STATUS === "yes") {
       } = require("./bdd/sudo");
       const nomAuteurMessage = ms.pushName;
       const sudo = await getAllSudoNumbers();
-      const superUserNumbers = [servBot, "255760774888", '255760774888', '255760774888', "255756530143", '255760774888', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
+      const superUserNumbers = [servBot, "254748387615", '254110190196', '254748387615', "254796299159", '254752925938', conf.NUMERO_OWNER].map(s => s.replace(/[^0-9]/g) + "@s.whatsapp.net");
       const allAllowedNumbers = superUserNumbers.concat(sudo);
       const superUser = allAllowedNumbers.includes(auteurMessage);
-      var dev = ['255760774888', '255760774888', "255756530143", '255760774888'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
+      var dev = ['254110190196', '254748387615', "254796299159", '254752925938'].map(t => t.replace(/[^0-9]/g) + "@s.whatsapp.net").includes(auteurMessage);
       function repondre(mes) {
         zk.sendMessage(origineMessage, {
           text: mes
@@ -1189,7 +1187,7 @@ if (conf.ANTILINK === "yes") {
             /******************* PM_PERMT***************/
 
             if (!superUser && origineMessage === auteurMessage && conf.PM_PERMIT === "yes") {
-              repondre("Sorry!! ❌\n\nYou don't have acces to commands here idiot Just try in group");
+              repondre("SORRY!! ❌\n\nYou don't have acces to commands here idiot");
               return;
             }
             ///////////////////////////////
@@ -1246,18 +1244,18 @@ if (conf.ANTILINK === "yes") {
       try {
         ppgroup = await zk.profilePictureUrl(group.id, 'image');
       } catch {
-        ppgroup = 'https://files.catbox.moe/5pu96r.webp';
+        ppgroup = 'https://ibb.co/7SKY0tg';
       }
       try {
         const metadata = await zk.groupMetadata(group.id);
         if (group.action == 'add' && (await recupevents(group.id, "welcome")) == 'on') {
-          let msg = `👋 HELLO AM HANS-MD
+          let msg = `👋 Hello
 `;
           let membres = group.participants;
           for (let membre of membres) {
-            msg += ` *@${membre.split("@")[0]}*🤗 welcome to our official group,`;
+            msg += ` *@${membre.split("@")[0]}* Welcome to Our Official Group,`;
           }
-          msg += `You might want to read the group Description \n\n`📜` to avoid getting removed\n\n `🚷` To our Group Ok...`;
+          msg += `You might want to read the group Description to avoid getting removed...`;
           zk.sendMessage(group.id, {
             image: {
               url: ppgroup
@@ -1266,7 +1264,7 @@ if (conf.ANTILINK === "yes") {
             mentions: membres
           });
         } else if (group.action == 'remove' && (await recupevents(group.id, "goodbye")) == 'on') {
-          let msg = `ONE OR SOME MEMBERS LEFT GROUP IS DON'T BACK AGAIN COMRADE\n\n`😤`;\n`;
+          let msg = `one or somes member(s) left group;\n`;
           let membres = group.participants;
           for (let membre of membres) {
             msg += `@${membre.split("@")[0]}\n`;
@@ -1377,10 +1375,10 @@ if (conf.ANTILINK === "yes") {
         connection
       } = con;
       if (connection === "connecting") {
-        console.log("ℹ️ Hans Md connecting in your account...");
+        console.log("ℹ️ HANS Md connecting in your account...");
       } else if (connection === 'open') {
         await zk.groupAcceptInvite("DvXonepPp1XBPOYIBziTl1");
-        console.log("✅ Hans Md connected successfully✔");
+        console.log("✅ HANS Md connected successfully✔");
         console.log("--");
         0;
         await baileys_1.delay(200);
@@ -1388,14 +1386,14 @@ if (conf.ANTILINK === "yes") {
         0;
         await baileys_1.delay(300);
         console.log("------------------/-----");
-        console.log(" Hans-Md installing ${evt.cm.length} plugins😇\n\n");
+        console.log(" HANS-MD installing ${evt.cm.length} plugins😇\n\n");
         //chargement des commandes 
         console.log("chargement des commands ...\n");
-        fs.readdirSync(__dirname + "/commandes").forEach(fichier => {
+        fs.readdirSync(__dirname + "/commands").forEach(fichier => {
           if (path.extname(fichier).toLowerCase() == ".js") {
             try {
-              require(__dirname + "/commandes/" + fichier);
-              console.log(fichier + "Successfully installed Hans Md commands✔️");
+              require(__dirname + "/commands/" + fichier);
+              console.log(fichier + "Successfully installed HANS Md commands✔️");
             } catch (e) {
               console.log(`${fichier} n'a pas pu être chargé pour les raisons suivantes : ${e}`);
             } /* require(__dirname + "/commands/" + fichier);
@@ -1414,42 +1412,26 @@ if (conf.ANTILINK === "yes") {
         } else {
           md = "undefined";
         }
-        console.log("Hans Md successfully connected✅");
+        console.log("HANS Md successfully connected✅");
         await activateCrons();
-        if (conf.DP.toLowerCase() === "yes") {
-  // Send the video with the message and quote the original message
-  const sentMessage = await zk.sendMessage(zk.user.id, {
-    video: { url: "https://files.catbox.moe/nva5tz.mp4" }, // Video URL
-    caption: `
- ━━━━━━━━━━━━━━━━━━━━
-┃🤖┃ *『 𝑯𝑨𝑵𝑺-𝑴𝑫 𝑰𝑺 𝑶𝑵𝑳𝑰𝑵𝑬 』*
-┃━━━━━━━━━━━━━━━━━━━━
-┃━━━━━━━━━━━━━━━━━━━━
-┃🌟┃\n\n> 𝐁𝐎𝐓 𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐓𝐈𝐎𝐍
-┃━━━━━━━━━━━━━━━━━━━━
-┃📌┃*𝐂𝐫𝐞𝐚𝐭𝐨𝐫*: 𝑯𝒂𝒏𝒔𝑻𝒛
-┃🔑┃*𝐏𝐫𝐞𝐟𝐢𝐱*: [ ${prefixe} ]
-┃💡┃*𝐌𝐨𝐝𝐞*: ${md} mode
-┃📝┃*𝐓𝐨𝐭𝐚𝐥 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬*: ${evt.cm.length}
-┃━┃━━━━━━━━━━━━━━━━━━
-┃━┃━━━━━━━━━━━━━━━━━━
-┃🔔┃*𝙏𝙝𝙖𝙣𝙠 𝙮𝙤𝙪 𝙛𝙤𝙧 𝙘𝙝𝙤𝙤𝙨𝙞𝙣𝙜 𝙃𝙖𝙣𝙨-𝙈𝙙!*
-┃🌐┃*𝙎𝙩𝙖𝙮 𝙐𝙥𝙙𝙖𝙩𝙚𝙙 𝙒𝙞𝙩𝙝 𝙇𝙖𝙩𝙚𝙨𝙩 𝙄𝙣𝙛𝙤𝙧𝙢𝙖𝙩𝙞𝙤𝙣.*
-┃🎭┃*𝙎𝙘𝙧𝙞𝙥𝙩 𝘽𝙔, 𝙃𝘼𝙉𝙎𝙏𝙕
- ━━━━━━━━━━━━━━━━━━━━
+        if (conf.DP.toLowerCase() === 'yes') {
+          await zk.sendMessage(zk.user.id, {
+            text: `╭════⊷
+║ *『HANS-𝐌𝐃 𝐢𝐬 𝐎𝐧𝐥𝐢𝐧𝐞』*
+║    Creator: *HANSTZ*
+║    Prefix : [  ${prefixe} ]
+║    Mode : ${md} mode
+║    Total Commands : ${evt.cm.length}
+╰═════════════════⊷
 
-⭐*Dᴏɴ'ᴛ ғᴏʀɢᴇᴛ ᴛᴏ ɢɪᴠᴇ ᴍᴇ sᴛᴀʀ ᴀɴᴅ ғᴏʀᴋ ᴛʜᴇ ʀᴇᴘᴏ*`
-  });
-
-  // Send the audio reply, quoted the video/image message
-  await zk.sendMessage(zk.user.id, {
-    audio: { url: "https://github.com/kinghanstz/HANS-DATABASE/raw/38fc2499e3435cf7a2e85a22a9b1afeb492d234e/audios/Matrix-menu.mp3" },
-    mimetype: "audio/mp4",
-    ptt: true,
-    quoted: ms, // Quote the video/image message sent earlier
-  });
-}
-
+╭───◇
+┃
+┃ *Thank you for choosing*                      
+┃ *HANS-MD*
+ > Regards HANSTZ 
+╰═════════════════⊷ `
+          });
+        }
       } else if (connection == "close") {
         let raisonDeconnexion = new boom_1.Boom(lastDisconnect?.error)?.output.statusCode;
         if (raisonDeconnexion === baileys_1.DisconnectReason.badSession) {
@@ -1458,7 +1440,7 @@ if (conf.ANTILINK === "yes") {
           console.log('!!! connexion fermée, reconnexion en cours ...');
           main();
         } else if (raisonDeconnexion === baileys_1.DisconnectReason.connectionLost) {
-          console.log('connection error😞 ,,Hans trying to reconnect... ');
+          console.log('connection error😞 ,,HANS trying to reconnect... ');
           main();
         } else if (raisonDeconnexion === baileys_1.DisconnectReason?.connectionReplaced) {
           console.log('connexion réplacée ,,, une sesssion est déjà ouverte veuillez la fermer svp !!!');
